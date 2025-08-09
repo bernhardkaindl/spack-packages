@@ -13,7 +13,7 @@ class RustBootstrap(Package):
     """Binary bootstrap Rust compiler."""
 
     homepage = "https://www.rust-lang.org"
-    url = "https://static.rust-lang.org/dist/rust-1.65.0-aarch64-apple-darwin.tar.gz"
+    url = "https://static.rust-lang.org/dist/rust-1.89.0-aarch64-apple-darwin.tar.gz"
 
     maintainers("alecbcs")
 
@@ -24,6 +24,35 @@ class RustBootstrap(Package):
     # should update these binary releases as bootstrapping requirements are
     # modified by new releases of Rust.
     rust_releases = {
+        "1.89.0": {
+            "darwin": {
+                "x86_64": "8590528cade978ecb5249184112887489c9d77ae846539e3ef4d04214a6d8663",
+                "aarch64": "87baeb57fb29339744ac5f99857f0077b12fa463217fc165dfd8f77412f38118",
+            },
+            "linux": {
+                "x86_64": "542f517d0624cbee516627221482b166bf0ffe5fd560ec32beb778c01f5c99b6",
+                "aarch64": "26d6de84ac59da702aa8c2f903e3c344e3259da02e02ce92ad1c735916b29a4a",
+                "powerpc64le": "80db8e203357a050780fb8a2cdc027b81d5ae1634fa999c3be69cf8a2e10bbf6",
+            },
+        },
+        "1.87.0": {
+            "linux": {
+                "x86_64": "1f6f18ce19387c42968a474cf175e67f99280614ded9c752d5d2e37af3204bcd",
+                "aarch64": "2c66e31d774a0dcd4422db74584ebc6362ff3ae90c452caff9d2fb912c821e8d",
+                "powerpc64le": "3f8f68d79460475396a52b5ae70eee73d6fb194fff1c4ff4286b64fbebee4429",
+            },
+        },
+        "1.86.0": {
+            "darwin": {
+                "x86_64": "bf8121850b2f6a46566f6c2bbe9fa889b915b1039febf36853ea9d9c4256c67d",
+                "aarch64": "01271f83549c3b5191334a566289aa41615ea8f8f530f49548733585f21c7e5a",
+            },
+            "linux": {
+                "x86_64": "f6a8c0d8b8a8a737c40eee78abe286a3cbe984d96b63de9ae83443360e3264bf",
+                "aarch64": "460058cd78f06875721427a42a5ce6a8b8ef2c0c3225fccfae149d9345572ff4",
+                "powerpc64le": "9b104428e2b0377dbdb9dc094eb4d9f4893ada0b80d2b315f0c4ea2135ed9007",
+            },
+        },
         "1.85.0": {
             "darwin": {
                 "x86_64": "69a36d239e38cc08c6366d1d85071847406645346c6f2d2e0dfaf64b58050d3d",
@@ -176,19 +205,27 @@ class RustBootstrap(Package):
         if self.os not in ("linux", "darwin"):
             return None
 
-        # Allow maintainers to checksum multiple architectures via
-        # `spack checksum rust-bootstrap@1.70.0-darwin-aarch64`.
-        match = re.search(r"(\S+)-(\S+)-(\S+)", str(version))
+        # Allow spack recipe developers to get checksums of all provided architectures via
+        # spack checksum -b rust-bootstrap 1.89.0-{aarch64,x86_64,ppc64le}-{darwin,linux}
+        # (When the <os> or <arch-os> is not added, the current spack target and os are used)
+        given_version = str(version)
+        if given_version:
+            tty.info(f"Looking for a download matching version {version}")
+        version_str = given_version.split("-")[0]
+        match = re.search(r"(\S+)-(\S+)-", given_version)
         if match:
-            version = match.group(1)
-            os = self.rust_os[match.group(2)]
-            target = self.rust_targets[match.group(3)]
+            arch = self.rust_targets[match.group(2)].split("-")[0]
         else:
-            os = self.rust_os[self.os]
-            target = self.target
+            arch = self.target  # Use the architecture spack target as the moment
+        match = re.search(r"(\S+)-(\S+)-(\S+)", given_version)
+        if match:
+            os = self.rust_os[match.group(3)]
+        else:
+            os = self.rust_os[self.os]  # Use the os running spack targets at the moment
 
-        url = "https://static.rust-lang.org/dist/rust-{0}-{1}-{2}.tar.gz"
-        return url.format(version, target, os)
+        url = f"https://static.rust-lang.org/dist/rust-{version_str}-{arch}-{os}.tar.gz"
+        tty.debug(f"Attempting {url}")
+        return url
 
     @run_before("install", when="platform=linux")
     def fixup_rpaths(self):
