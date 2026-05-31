@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0 OR MIT
 # Copyright (C) Spack Project Developers. See COPYRIGHT file for details.
 # --------------------------------------------------------------------------------------------------
-from spack.package import *
 from spack_repo.builtin.build_systems.cmake import CMakePackage
+
+from spack.package import *
 
 
 class Lyra(CMakePackage):
