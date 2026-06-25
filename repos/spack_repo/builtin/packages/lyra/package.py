@@ -1,7 +1,7 @@
-# --------------------------------------------------------------------------------------------------
-# SPDX-License-Identifier: Apache-2.0 OR MIT
-# Copyright (C) Spack Project Developers. See COPYRIGHT file for details.
-# --------------------------------------------------------------------------------------------------
+# Copyright Spack Project Developers. See COPYRIGHT file for details.
+#
+# SPDX-License-Identifier: (Apache-2.0 OR MIT)
+
 from spack_repo.builtin.build_systems.cmake import CMakePackage
 
 from spack.package import *
@@ -14,7 +14,8 @@ class Lyra(CMakePackage):
     url = "https://github.com/bfgroup/Lyra/releases/download/1.7.0/lyra-1.7.0.tar.bz2"
     license("BSL-1.0")
 
-    version("1.7.0", sha256="2a4cbf23e4a4b9c33dd25df11e5017e0647575b45b8b4a42349ab754f670b853")
+    version("1.8.0", sha256="7f70c230f0bbcdf77a653f982343c87028cf8a0d4196f6ac79ad376697ed1c1a")
+
     depends_on("cmake@3.12:", type="build")
 
     def test(self):
