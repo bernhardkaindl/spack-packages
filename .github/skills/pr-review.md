@@ -4,6 +4,10 @@ Review a pull request in this Spack package repository for correctness, complete
 justification. CI already handles automated checks (style, license headers, SHA256 checksums,
 `spack audit`), so this review focuses on what automation cannot verify.
 
+Before interpreting any Spack spec, `depends_on(..., when=...)`, `patch(..., when=...)`, or
+version range, read and apply [`spack-spec-syntax`](spack-spec-syntax.md). Spack `@` version
+syntax is inclusive and differs from PEP 440 / Python packaging constraints.
+
 ## Usage
 
 Invoke this skill by providing a PR number:
@@ -34,14 +38,21 @@ Check that the PR description adequately justifies the changes:
 - Flag vague descriptions like "update to latest version" with no further explanation as a
   concern, not a blocker.
 
-### 3. Version Currency
+### 3. Versions
 
 For every package version being added or updated:
 
+- Interpret every submitted `@` range using [`spack-spec-syntax`](spack-spec-syntax.md): `@3.2`
+  is a range, `@=3.2` is exact, and range endpoints are inclusive.
+- For versions which are branch-based (except develop, main, etc which are intentionally
+  rolling builds), check that the branch-based version also has a `commit=` argument
+  to allow the branch-based version to be built on an air-gapped host as well.
 - If the package uses a non-PyPI source (e.g., a GitHub `url` or `git` attribute), check the upstream repository's tags or releases page to verify the submitted version is the latest.
 - Query PyPI (`https://pypi.org/pypi/<package-name>/json`) to retrieve the current latest stable release. Compare it to the version being added. If the PR adds version X but PyPI already shows a newer stable release Y, flag this.
 - Do **not** flag pre-releases (alpha, beta, rc) as missing unless the PR explicitly targets
   pre-releases.
+- If a PR adds a new version across many packages, it is accepted that some
+  packages in the PR do not add such new version.
 
 ### 4. Dependency Completeness
 
@@ -74,7 +85,8 @@ For each dependency in the upstream build spec:
 - Have any deps that were removed upstream (compared to the previous version's spec) been removed
   from `package.py` as well? Missing removals are a concern.
 - Are newly required deps for the new version gated with a `when="@<new_version>:"` constraint
-  when older versions remain present?
+  when older versions remain present? Verify the range using
+  [`spack-spec-syntax`](spack-spec-syntax.md), not Python packaging semantics.
 
 #### 4c. Ecosystem consistency
 
@@ -90,6 +102,21 @@ obvious issues:
 - `pypi =` field (if present) uses the canonical PyPI distribution name and filename.
 - New `depends_on` entries use the `py-` prefix for Python packages.
 - `type=` annotation is present on all `depends_on` calls (no bare `depends_on` without type).
+
+## 6. Patches
+
+When patches are added, check that the patch has proper limits to which versions it is applied:
+- Often, submitters may test a patch only with the versions they cared about.
+- The review should check if a proper `when=` version range is added to the patch
+  to avoid that patches are applied to versions to which the patch does not apply. Interpret the
+  `when=` version range using [`spack-spec-syntax`](spack-spec-syntax.md).
+- When new versions are added, and the `when=` version range of patches are changed,
+  this is a good sign that the submitter tested this patch, if the PR narrows
+  versions to which a patch is applied, then that is a good and expected change.
+
+Python patches:
+- It is accepted that patches to Python code may use `try` to support different
+  Python versions in the code.
 
 ## Output Format
 

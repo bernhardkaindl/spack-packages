@@ -9,6 +9,10 @@ This skill handles targeted updates of one or a small group of related Python pa
 the new version metadata, updating `package.py` with the new version and SHA256 checksum,
 reconciling dependency changes from the upstream build spec, and opening a draft PR.
 
+For all Spack spec syntax, especially `@` version ranges and `when=` constraints, read and apply
+[`spack-spec-syntax`](spack-spec-syntax.md). Spack version ranges are inclusive and are not PEP 440
+specifier syntax.
+
 ## Usage
 
 Invoke this skill by providing one or more package names (using either the Spack name with
@@ -117,7 +121,9 @@ For each change detected:
 
 #### Version range notation
 
-Spack version ranges are **upper-limit-inclusive**: `@3.8:3.10` includes `3.10` itself.
+Use [`spack-spec-syntax`](spack-spec-syntax.md) for full `@` semantics. In particular, Spack
+version ranges are **upper-limit-inclusive**: `@3.8:3.10` includes `3.10` itself, `@3.2` is a
+range, and `@=3.2` is exact.
 
 - Upstream `>=3.8` → `@3.8:`
 - Upstream `>=3.8,<3.11` → `@3.8:3.10` (3.10 is the last included version)
@@ -164,7 +170,7 @@ Make the following changes to each package file:
 - Confirm the new `version(...)` line is syntactically valid Python and has no `# FIXME` suffix.
 - Confirm all new `depends_on` entries use the `py-` prefix and have a `type=` argument.
 - Confirm any version range upper bounds are written in inclusive form (e.g., `:3.10`, not
-  `:3.10.99`).
+  `:3.10.99`) and match [`spack-spec-syntax`](spack-spec-syntax.md).
 - Run the style checker and package audit before pushing (see
   [`package-update`](package-update.md) Phase 8 for the full commands):
 
