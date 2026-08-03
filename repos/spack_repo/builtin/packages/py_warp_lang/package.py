@@ -39,8 +39,6 @@ class PyWarpLang(PythonPackage, CudaPackage):
 
     patch("clang_cpp.patch")
 
-    phases = ["build", "install"]
-
     resource(
         name="llvm",
         url="https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-21.1.0.tar.gz",
@@ -49,7 +47,9 @@ class PyWarpLang(PythonPackage, CudaPackage):
         when="@1.14.0",
     )
 
-    def build(self, spec, prefix):
+    @run_before("install")
+    def build_lib(self):
+        spec = self.spec
         python = spec["python"].command
         build_command = ["build_lib.py"]
         build_command += ["--libmathdx-path", f"{spec['nvidia-libmathdx'].prefix}"]
