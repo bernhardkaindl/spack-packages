@@ -37,5 +37,5 @@ class PyTensordict(PythonPackage):
         depends_on("py-cloudpickle")
         depends_on("py-packaging")
         depends_on("py-importlib-metadata")
-        depends_on("py-orjson", when="^python@:3.12")
-        depends_on("py-pyvers@0.2")
+        depends_on("py-orjson", when="^python@:3.14")
+        depends_on("py-pyvers@0.2:")
