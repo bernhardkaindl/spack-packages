@@ -208,6 +208,7 @@ class Bazel(Package):
         # https://github.com/bazelbuild/bazel/issues/10327
         env.set("BAZEL_LINKOPTS", "")
         env.set("BAZEL_LINKLIBS", "-lstdc++")
+        env.set("EMBED_LABEL", str(self.version))
 
         # https://github.com/bazelbuild/bazel/issues/27349
         # https://github.com/bazelbuild/bazel/issues/27401
