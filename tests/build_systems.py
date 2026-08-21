@@ -448,6 +448,24 @@ def test_autoreconf_search_path_args_external_order(
     ]
 
 
+def test_autoreconf_search_path_args_skip_compiler(
+    default_mock_concretization, tmp_path: pathlib.Path
+):
+    """Compiler prefixes are not aclocal macro providers."""
+    spec = default_mock_concretization("dttop")
+    compiler, macro_provider = spec.dependencies(deptype="build")
+    compiler_aclocal = tmp_path / "compiler" / "share" / "aclocal"
+    provider_aclocal = tmp_path / "provider" / "share" / "aclocal"
+    compiler_aclocal.mkdir(parents=True)
+    provider_aclocal.mkdir(parents=True)
+    compiler.external_path = str(tmp_path / "compiler")
+    macro_provider.set_prefix(str(tmp_path / "provider"))
+    compiler_edge = next(edge for edge in spec.edges_to_dependencies() if edge.spec is compiler)
+    compiler_edge.virtuals = ("c", "cxx")
+
+    assert autotools._autoreconf_search_path_args(spec) == ["-I", str(provider_aclocal)]
+
+
 def test_autoreconf_search_path_skip_nonexisting(
     default_mock_concretization, tmp_path: pathlib.Path
 ):
@@ -457,6 +475,31 @@ def test_autoreconf_search_path_skip_nonexisting(
     build_dep_one.set_prefix(str(tmp_path / "fst"))
     build_dep_two.set_prefix(str(tmp_path / "snd"))
     assert autotools._autoreconf_search_path_args(spec) == []
+
+
+def test_autoreconf_search_path_skip_inaccessible(
+    default_mock_concretization, tmp_path: pathlib.Path, monkeypatch
+):
+    """Skip -I flags for directories inaccessible due to sandbox restrictions."""
+    spec = default_mock_concretization("dttop")
+    inaccessible = tmp_path / "inaccessible" / "share" / "aclocal"
+    accessible = tmp_path / "accessible" / "share" / "aclocal"
+    inaccessible.mkdir(parents=True)
+    accessible.mkdir(parents=True)
+    inaccessible_dep, accessible_dep = spec.dependencies(deptype="build")
+    inaccessible_dep.set_prefix(str(tmp_path / "inaccessible"))
+    accessible_dep.set_prefix(str(tmp_path / "accessible"))
+
+    original_scandir = os.scandir
+
+    def scandir(path):
+        if path == str(inaccessible):
+            raise PermissionError(path)
+        return original_scandir(path)
+
+    monkeypatch.setattr(autotools.os, "scandir", scandir)
+
+    assert autotools._autoreconf_search_path_args(spec) == ["-I", str(accessible)]
 
 
 def test_autoreconf_search_path_dont_repeat(default_mock_concretization, tmp_path: pathlib.Path):
