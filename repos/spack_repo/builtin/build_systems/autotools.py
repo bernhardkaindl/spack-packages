@@ -6,6 +6,7 @@ import stat
 import subprocess
 from typing import Callable, List, Optional, Set, Tuple, Union
 
+from spack import deptypes
 from spack.package import (
     BuilderWithDefaults,
     Executable,
@@ -856,7 +857,11 @@ def _autoreconf_search_path_args(spec: Spec) -> List[str]:
         except OSError:
             pass
 
-    for dep in spec.dependencies(deptype="build"):
+    for edge in spec.edges_to_dependencies(depflag=deptypes.BUILD):
+        # compiler prefixes might have foreign aclocal files which we do not want to include
+        if any(language in edge.virtuals for language in ("c", "cxx", "fortran")):
+            continue
+        dep = edge.spec
         path = dep.prefix.share.aclocal
         # Skip non-existing aclocal paths
         try:
@@ -865,6 +870,12 @@ def _autoreconf_search_path_args(spec: Spec) -> List[str]:
             continue
         # Skip things seen before, as well as non-dirs.
         if (s.st_ino, s.st_dev) in dirs_seen or not stat.S_ISDIR(s.st_mode):
+            continue
+        # Skip directories we can't access (not whitelisted by sandbox):
+        try:
+            with os.scandir(path):
+                pass
+        except OSError:
             continue
         dirs_seen.add((s.st_ino, s.st_dev))
         flags = flags_external if dep.external else flags_spack
