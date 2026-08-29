@@ -32,8 +32,9 @@ jobs:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
         id: filter
         with:
-          # For merge group events, compare against the target branch (main)
-          base: ${{ github.event_name == 'merge_group' && github.event.merge_group.base_ref || '' }}
+          # For merge group events, compare against the target branch. The fallback
+          # also supplies act with a base branch when repository metadata is absent.
+          base: ${{ github.event_name == 'merge_group' && github.event.merge_group.base_ref || (github.actor == 'nektos/act' && 'develop') || github.event.repository.default_branch || 'develop' }}
           # For merge group events, use the merge group head ref
           ref: ${{ github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.ref }}
           # See https://github.com/dorny/paths-filter/issues/56 for the syntax used below

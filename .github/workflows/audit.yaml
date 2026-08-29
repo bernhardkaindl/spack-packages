@@ -15,6 +15,7 @@ jobs:
   # Run audits on all the packages in the built-in repository
   package-audits:
     name: package-audits (${{ matrix.system.os }}, ${{ matrix.spack_ref || 'pinned' }})
+    if: ${{ github.actor != 'nektos/act' }}
     runs-on: ${{ matrix.system.os }}
     strategy:
       fail-fast: false

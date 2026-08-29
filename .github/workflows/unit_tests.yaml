@@ -39,6 +39,7 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
     - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      if: ${{ github.actor != 'nektos/act' }}
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install System packages
@@ -49,6 +50,8 @@ jobs:
               coreutils cvs gfortran graphviz gnupg2 mercurial ninja-build \
               cmake bison libbison-dev subversion
     - name: Install Python packages
+      env:
+        PIP_BREAK_SYSTEM_PACKAGES: ${{ github.actor == 'nektos/act' && '1' || '' }}
       run: pip install --upgrade pytest clingo
     - uses: ./.github/actions/checkout-spack
     - name: Run unit tests
