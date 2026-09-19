@@ -36,7 +36,7 @@ class Pigz(MakefilePackage):
     def build(self, spec, prefix):
         # force makefile to use cc as C compiler which is set by
         # spack
-        make("CC=cc", "CFLAGS=-O3 -Wall")
+        make("CC=cc", f"CFLAGS=-O3 -Wall -I{spec['zlib-api'].headers.directories[0]})
 
     def install(self, spec, prefix):
         mkdirp(prefix.bin)
